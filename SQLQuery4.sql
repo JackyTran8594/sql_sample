@@ -4,16 +4,50 @@ declare @currentPage as int, @pageSize as int
 declare @stringParams as nvarchar
 set @currentPage = 1
 set @pageSize = 50	
+declare @SalesOrderDetailID nvarchar = null
+declare @CarrierTrackingNumber nvarchar = null
+declare @ProductId nvarchar = null
+declare @UnitPrice nvarchar = null
+declare @ModifiedDate_to Datetime = null
+declare @ModifiedDate_from Datetime = null 
 
+--declare @sql nvarchar(max)
+
+--set @sql = '1=1';
+
+--if @SalesOrderDetailID is not null
+--	set @sql = @sql + ' and s.SalesOrderDetailID like '@SalesOrderDetailID%''
+
+--if @CarrierTrackingNumber is not null
+--	set @sql = @sql + ' and s.CarrierTrackingNumber like '@CarrierTrackingNumber%''
+
+--if @ProductId is not null
+--	set @sql = @sql + ' and s.ProductId like '@ProductId%''
+
+--if @UnitPrice is not null
+--	set @sql = @sql + ' and s.UnitPrice like '@UnitPrice%''
+
+--if @ModifiedDate_to is not null
+--	set @sql = @sql + ' and s.ModifiedDate_to >= @ModifiedDate_to'
+
+--if @ModifiedDate_from is not null
+--	set @sql = @sql + ' and s.ModifiedDate_from <= @ModifiedDate_from'
 
 select * 
 from Sales.SalesOrderDetail s
-where  s.ProductID like '76%' and s.CarrierTrackingNumber like 'FB%'
-order by s.SalesOrderID
+where  (s.SalesOrderDetailID like '@SalesOrderDetailID%' or @SalesOrderDetailID is null) 
+	and (s.CarrierTrackingNumber like '@CarrierTrackingNumber%' or @CarrierTrackingNumber is null) 
+	and (s.ProductId like '@ProductId%' or @ProductId is null) 
+	and (s.UnitPrice like '@UnitPrice%' or @UnitPrice is null) 
+	and (s.ModifiedDate >= '@ModifiedDate_to' or @ModifiedDate_to is null) 
+	and (s.ModifiedDate <= '@ModifiedDate_from' or @ModifiedDate_from is null) 
+order by s.SalesOrderID desc
 offset @pageSize * (@currentPage - 1) rows
 fetch next @pageSize rows only option (recompile)
 
 
+
+select * from Sales.SalesOrderDetail
 
 	
 select * from Sales.SalesOrderDetail s
