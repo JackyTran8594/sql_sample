@@ -125,6 +125,69 @@ END
 
 
 
+declare @page as int = 1
+declare @size as int = 100
+declare @start as int = (@page - 1)*@size + 1
+declare @lastInSize as int = @page*@size
+declare @totalRecord as int = null
+
+;with SalesOrderDetail_CTE as
+(
+	select * ,
+	row_number() over (order by SalesOrderID asc) as 'rowNumber'
+	from Sales.SalesOrderDetail
+)
+
+select *
+from SalesOrderDetail_CTE
+where rowNumber >= @start and rowNumber <= @lastInSize
+for xml raw('SalesOrderDetail')
+
+exec dbo.sp_paginglist 1,100,null,null,null,null,null, null;
+
+alter proc sp_paging_CTE 
+(
+	@currentPage int,
+	@pageSize int,
+	@SalesOrderDetailID nvarchar = null,
+    @CarrierTrackingNumber nvarchar = null,
+	@ProductId nvarchar(20) = null,
+	@UnitPrice nvarchar(20) = null,
+	@ModifiedDate_to varchar(20) = null,
+	@ModifiedDate_from varchar(20) = null
+)
+as
+begin
+
+	declare @start as int = (@currentPage - 1)*@pageSize + 1
+	declare @lastInSize as int = @currentPage*@pageSize
+
+	
+;with SalesOrderDetail_CTE as
+(
+	select * ,
+	row_number() over (order by SalesOrderID asc) as 'rowNumber'
+	from Sales.SalesOrderDetail s
+	where  
+	(s.SalesOrderDetailID like +@SalesOrderDetailID+'%' or @SalesOrderDetailID is null) 
+	and (s.CarrierTrackingNumber like +@CarrierTrackingNumber+'%' or @CarrierTrackingNumber is null) 
+	and (s.ProductId like +@ProductId+ '%' or @ProductId is null) 
+	and (s.UnitPrice like +@UnitPrice+'%' or @UnitPrice is null) 
+	and (Convert(date,s.ModifiedDate) >= Convert(date,@ModifiedDate_to)  or @ModifiedDate_to is null)
+	and (Convert(date,s.ModifiedDate)  <=  Convert(date,@ModifiedDate_from) or @ModifiedDate_from is null) 
+	
+)
+
+select *
+from SalesOrderDetail_CTE s
+where rowNumber >= @start and rowNumber <= @lastInSize
+order by s.SalesOrderID asc
+
+end
+go
+
+exec dbo.sp_paging_CTE 2,100
+
 
 
 
